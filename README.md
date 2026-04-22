@@ -332,7 +332,7 @@ A arquitetura foi projetada intencionalmente com poucas camadas e número reduzi
 
 ### 2️⃣ Bibliotecas Utilizadas
 
-- **TensorFlow 2.x** - Framework principal para construção, treinamento e conversão do modelo
+- **TensorFlow** - Framework principal para construção, treinamento e conversão do modelo
 - **NumPy** - Manipulação de arrays e operações numéricas
 - **Random** - Configuração de seeds para reprodutibilidade
 - **OS** - Operações de sistema de arquivos (built-in)
