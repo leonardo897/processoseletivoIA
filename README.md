@@ -301,7 +301,7 @@ Copie o link do seu repositório e envie conforme orientações do processo sele
 ## 📝 Relatório do Candidato
 
 **👤 Identificação:** 
-**Nome Completo:** Leonardo de Oliveira Sales Vieira
+**Leonardo de Oliveira Sales Vieira** 
 
 ### 1️⃣ Resumo da Arquitetura do Modelo
 
