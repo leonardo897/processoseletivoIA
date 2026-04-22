@@ -372,7 +372,7 @@ A quantização dinâmica reduz os pesos do modelo de float32 para int8 durante 
 
 | Métrica | Modelo Original (.h5) | Modelo Otimizado (.tflite) |
 |---------|----------------------|---------------------------|
-| Acurácia | 97,58% | 97,57% |
+| Acurácia | 98,11% | 98,11% |
 | Tamanho do Arquivo | 208,17 KB | 20,35 KB |
 | Redução de Tamanho | - | **90,2%** |
 | Perda de Precisão | - | **0,0%** |
