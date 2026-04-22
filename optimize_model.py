@@ -1,6 +1,7 @@
 import tensorflow as tf
 import numpy as np
 import random
+import os
 
 # Configuração de seeds para reprodutibilidade
 def set_seeds(seed=42):
