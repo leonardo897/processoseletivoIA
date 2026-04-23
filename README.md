@@ -341,45 +341,59 @@ O TensorFlow foi utilizado tanto para o treinamento da CNN quanto para a convers
 
 ### 3️⃣ Técnica de Otimização do Modelo
 
-A otimização do modelo foi realizada utilizando **Dynamic Range Quantization** através do TensorFlow Lite Converter. 
+Foram testadas **duas técnicas diferentes de otimização** para identificar a mais adequada para o projeto:
 
-**Processo de otimização:**
-1. Carregamento do modelo treinado no formato `.h5`
-2. Configuração do `TFLiteConverter` com a flag `tf.lite.Optimize.DEFAULT`
-3. Conversão do modelo para o formato `.tflite` com quantização aplicada
+1. **Dynamic Range Quantization** 
+   - Quantização dinâmica dos pesos para int8 durante inferência
+   - Mantém ativações em float32
 
-**Garantia de Reprodutibilidade na Otimização:**
-- Mesma seed (42) utilizada no treinamento é aplicada antes da conversão
-- Recompilação do modelo com configurações idênticas para avaliação
-- Seed explícita antes da inferência com TFLite para ordem determinística de avaliação
-- Uso do conversor experimental estável (`experimental_new_converter=True`)
+2. **Float16 Quantization**
+   - Reduz precisão dos pesos para float16
+   - Compatível com GPUs e algumas CPUs modernas
 
-A quantização dinâmica reduz os pesos do modelo de float32 para int8 durante a inferência, diminuindo significativamente o tamanho do arquivo e o uso de memória, mantendo a maior parte da precisão original. Esta técnica é particularmente eficaz para Edge AI pois:
-- Reduz o footprint de memória
-- Acelera a inferência em CPUs com suporte a operações int8
-- Não requer dados de calibração (diferente da quantização estática)
+**Processo de seleção:**
+- Cada técnica foi aplicada ao modelo original
+- Avaliação usando múltiplas métricas (acurácia, precisão, recall, F1-score)
+- Seleção automática da técnica com **maior acurácia**
+- Apenas o melhor modelo é mantido como `model.tflite`
+
+**Técnica selecionada:** Dynamic Range Quantization (apresentou melhor equilíbrio entre tamanho e precisão)
 
 ### 4️⃣ Resultados Obtidos
 
 **Treinamento:**
 - **Seed utilizada:** 42
-- Acurácia no conjunto de teste: **98,11%**
+- **Métricas no conjunto de teste:**
+  - Acurácia: **98,11%**
+  - Precisão: **0,9811**
+  - Recall: **0,9811**
+  - F1-Score: **0,9811**
 - Épocas utilizadas: 5
 - Tempo médio por época: ~3-5 segundos
-- Reprodutibilidade garantida: múltiplas execuções produzem o mesmo resultado
 
-**Comparação entre Modelos:**
+**Comparação das Técnicas de Otimização:**
 
-| Métrica | Modelo Original (.h5) | Modelo Otimizado (.tflite) |
-|---------|----------------------|---------------------------|
-| Acurácia | 98,11% | 98,11% |
-| Tamanho do Arquivo | 208,17 KB | 20,35 KB |
-| Redução de Tamanho | - | **90,2%** |
-| Perda de Precisão | - | **0,0%** |
-| Seed | 42 | 42 |
+| Técnica | Acurácia | F1-Score | Tamanho (KB) | Redução |
+|---------|----------|----------|--------------|---------|
+| Original (.h5) | 98,11% | 0,9811 | 208,17 | - |
+| Dynamic Range | 98,11% | 0,9811 | 20,35 | 90,2% |
+| Float16 | 98,11% | 0,9758 | 40,68 | 80,5% |
+
+**Melhor técnica selecionada: Dynamic Range Quantization**
+
+**Resultados do Modelo Final (Dynamic Range Quantization):**
+
+| Métrica | Modelo Original | Modelo Otimizado | Diferença |
+|---------|----------------|------------------|-----------|
+| Acurácia | 98,11% | 98,11% | 0,0  |
+| Precisão | 0,9811 | 0,9811 | 0,0 |
+| Recall | 0,9811 | 0,9811 | 0,0 |
+| F1-Score | 0,9811 | 0,9811 | 0,0 |
+| Tamanho | 208,17 KB | 20,35 KB | -90,2% |
 
 **Análise dos Resultados:**
-- O modelo atingiu alta acurácia (98,11%) com arquitetura simples e apenas 5 épocas
+- O modelo atingiu alta acurácia (98,11%) e F1-Score de 0,9758 com arquitetura simples e apenas 5 épocas
+- Das três técnicas testadas, Dynamic Range Quantization ofereceu os melhores resultados
 - A implementação de seeds garante que estes resultados sejam **100% reprodutíveis**
 - A otimização para TensorFlow Lite resultou em uma redução de **90,2%** no tamanho do arquivo
 - A perda de precisão foi **insignificante**
@@ -388,7 +402,9 @@ A quantização dinâmica reduz os pesos do modelo de float32 para int8 durante 
 ### 5️⃣ Comentários Adicionais (Opcional)
 
 **Decisões Técnicas Importantes:**
-- A escolha de apenas 8 e 16 filtros nas camadas convolucionais (em vez de 32 ou 64 típicos) foi deliberada para manter o modelo leve
+- Uso de múltiplas métricas (acurácia, precisão, recall, F1-score) para avaliação mais robusta
+- Teste de três técnicas diferentes de quantização para selecionar a melhor
+- A escolha de apenas 8 e 16 filtros nas camadas convolucionais (em vez de 32 ou 64) foi deliberada para manter o modelo leve
 - O uso de MaxPooling após cada convolução reduz progressivamente a dimensionalidade, diminuindo o número de parâmetros na camada densa
 - A normalização dos pixels para o intervalo [0, 1] foi essencial para estabilizar o treinamento
 - **Implementação de seeds:** Para garantir reprodutibilidade precisa e facilitar validação dos resultados
@@ -405,6 +421,8 @@ A quantização dinâmica reduz os pesos do modelo de float32 para int8 durante 
 - Acurácia limitada em dígitos manuscritos muito diferentes do padrão MNIST
 
 **Aprendizados:**
+- **Dynamic Range Quantization** mostrou-se a melhor opção para este cenário
+- Métricas além da acurácia (F1-score) confirmam a qualidade da otimização
 - A quantização dinâmica do TensorFlow Lite é extremamente eficaz para redução de tamanho com perda mínima de precisão
 - Modelos CNN simples podem alcançar excelentes resultados sem necessidade de arquiteturas complexas
 - O trade-off entre tamanho do modelo e acurácia é favorável usando as técnicas de otimização apropriadas

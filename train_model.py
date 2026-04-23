@@ -11,7 +11,7 @@ def set_seeds(seed=42):
     np.random.seed(seed)
     tf.random.set_seed(seed)
     
-    # Para o TensorFlow garantir operações determinísticas
+    # Para TensorFlow garantir operações determinísticas
     tf.keras.utils.set_random_seed(seed)
     tf.config.experimental.enable_op_determinism()
 
@@ -58,7 +58,7 @@ def train_model():
     model.compile(
         optimizer=keras.optimizers.Adam(learning_rate=0.001),
         loss="sparse_categorical_crossentropy",
-        metrics=["accuracy"]
+        metrics=['accuracy']
     )
 
     model.summary()
@@ -79,11 +79,36 @@ def train_model():
 
     print("\nAvaliando no conjunto de teste...")
     test_loss, test_acc = model.evaluate(x_test, y_test, verbose=2)
-    print(f"\nAcurácia final no teste: {test_acc:.4f}")
+    
+    # Faz predições para calcular métricas adicionais
+    y_pred_proba = model.predict(x_test, verbose=0)
+    y_pred = np.argmax(y_pred_proba, axis=1)
+    
+    # Calcula métricas usando TensorFlow
+    # Converte para one-hot para cálculos
+    y_true_one_hot = tf.keras.utils.to_categorical(y_test, 10)
+    y_pred_one_hot = tf.keras.utils.to_categorical(y_pred, 10)
+    
+    # Calcula precisão, recall e F1-score
+    precision = tf.keras.metrics.Precision()
+    recall = tf.keras.metrics.Recall()
+    
+    precision.update_state(y_true_one_hot, y_pred_one_hot)
+    recall.update_state(y_true_one_hot, y_pred_one_hot)
+    
+    precision_val = precision.result().numpy()
+    recall_val = recall.result().numpy()
+    f1_val = 2 * (precision_val * recall_val) / (precision_val + recall_val + 1e-7)
+    
+    print(f"\nResultados no conjunto de teste:")
+    print(f"  Acurácia:  {test_acc:.4f} ({test_acc*100:.2f}%)")
+    print(f"  Precisão:  {precision_val:.4f}")
+    print(f"  Recall:    {recall_val:.4f}")
+    print(f"  F1-Score:  {f1_val:.4f}")
 
     # Salva o modelo no formato Keras (.h5)
     model.save("model.h5")
-    print("Modelo salvo como 'model.h5'")
+    print("\nModelo salvo como 'model.h5'")
     print(f"\nResultados reproduzíveis garantidos com SEED={SEED}")
 
 if __name__ == "__main__":
